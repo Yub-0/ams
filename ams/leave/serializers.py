@@ -7,4 +7,4 @@ class StaffLeaveSerializer(serializers.Serializer):
 
     class Meta:
         model = StaffLeave
-        fields = ['id', 'day', 'description', 'user']
+        fields = ['id', 'date', 'description', 'user']

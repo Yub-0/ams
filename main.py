@@ -14,3 +14,20 @@ if __name__ == '__main__':
     print_hi('PyCharm')
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+arrival_time_threshold = 2
+import datetime
+import pandas as pd
+# t1 = datetime.time.now() + datetime.timedelta(hours=3)
+# t2 = datetime.time.now() + datetime.timedelta(minutes=60)
+# print(t1)
+# print(t2)
+
+add_time = datetime.timedelta(hours=2)
+t2 = datetime.datetime.now() + add_time
+print(pd.to_datetime(t2).time())
+
+print(add_time)
+
+
+# HOW TO ADD TIME WITH TIME

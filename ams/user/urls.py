@@ -18,10 +18,10 @@ list_role = RolesView.as_view({
 list_department = DepartmentsView.as_view({
     'get': 'list',
 })
-urlpatterns = format_suffix_patterns([
+urlpatterns =[
     path('users/register', reg_user, name='reg_user'),
     path('users/roles/register', reg_role, name='reg_role'),
     path('users/department/register', reg_department, name='reg_department'),
     path('roles', list_role, name='list_role'),
     path('departments', list_department, name='list_department')
-])
+]

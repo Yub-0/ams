@@ -2,13 +2,12 @@ from attendance.views import UserListView
 from django.urls import path
 from rest_framework.urlpatterns import format_suffix_patterns
 
-from attendance.views import ViewAllAttendance, ViewDailyAttendance, AttendanceSyncView
-
+from attendance.views import ViewAttendanceLog, ViewDailyAttendance, AttendanceSyncView, DaysReport, AttendanceReport
 
 all_user = UserListView.as_view({
     'get': 'list',
 })
-all_attendance = ViewAllAttendance.as_view({
+all_attendance = ViewAttendanceLog.as_view({
     'get': 'list'
 })
 
@@ -18,16 +17,21 @@ all_DAttendance = ViewDailyAttendance.as_view({
 ca = AttendanceSyncView.as_view({
     'post': 'create'
 })
-# cd = DailyLogsView.as_view()
-
+show_DailyReport = DaysReport.as_view({
+    'get': 'list'
+})
+view_attendance_report = AttendanceReport.as_view({
+    'get': 'list'
+})
 # sync_user = AttendanceLogView.as_view({
 #     'post': 'create',
 # })
-urlpatterns = format_suffix_patterns([
+urlpatterns = [
     path('users/', all_user, name='all_user'),
     # path('users/sync', sync_user, name='sync_user')
     path('viewAllAttendance', all_attendance, name='all_attendance'),
-    path('viewDailyAttendance', all_DAttendance, name='all_dailyattendance'),
+    path('viewDayAttendance', all_DAttendance, name='all_daysattendance'),
     path('syncAt', ca, name='syncAt'),
-    # path('syncDa', cd, name='synceDa')
-])
+    path('showReport', show_DailyReport, name='daily_report'),
+    path('AttendanceReport', view_attendance_report, name='attendancereport')
+]

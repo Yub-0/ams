@@ -8,11 +8,12 @@ from user.models import Users
 
 class StaffLeave(models.Model):
     id = models.BigAutoField(primary_key=True)
-    day = models.DateField(null=False)
+    date = models.DateField(null=False)
     description = models.TextField(null=False)
     user = models.ForeignKey(Users, on_delete=models.PROTECT)
 
+
     def _get_bs_date(self):
-        return NepaliDate.to_nepali_date(self.day)
+        return NepaliDate.to_nepali_date(self.date)
 
     bs_date = property(_get_bs_date)
