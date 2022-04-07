@@ -1,33 +1,38 @@
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.utils import timezone
+from django.utils.translation import gettext as _
+from user.managers import CustomUserManager
 
-# Create your models here.
-from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, UserManager
 
-
-# Create your models here.
-class Roles(models.Model):
-    role = models.TextField(primary_key=True, max_length=100)
+class Role(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    role_name = models.CharField(unique=True, max_length=100)
     description = models.TextField(null=True, blank=True)
 
 
-class Departments(models.Model):
+class Department(models.Model):
+    id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True, blank=False, null=False)
     shift_start = models.TimeField(auto_now=False, blank=False, null=False)
     shift_end = models.TimeField(auto_now=False, blank=False, null=False)
 
 
-class Users(AbstractBaseUser):
-    REQUIRED_FIELDS = ['name', 'password', 'role']
-    USERNAME_FIELD = 'id'
-
+class MyUser(AbstractBaseUser, PermissionsMixin):
     id = models.BigAutoField(primary_key=True)
-    name = models.TextField(null=False, blank=False)
+    device_id = models.BigIntegerField(_('device_id'), unique=True)
+    name = models.CharField(null=False, blank=False, max_length=25)
     password = models.CharField(null=False, max_length=256)
-    role = models.ForeignKey(Roles, on_delete=models.PROTECT)
-    device_id = models.BigIntegerField(unique=True, null=False, blank=False)
-    department = models.ForeignKey(Departments, on_delete=models.PROTECT)
-    is_active = models.BooleanField(null=False, blank=False)
+    role = models.ForeignKey(Role, on_delete=models.PROTECT, default=2)
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, default=2)
+    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    date_joined = models.DateTimeField(default=timezone.now)
 
-    objects = UserManager()
+    REQUIRED_FIELDS = ['name', 'password', 'role', 'department']
+    USERNAME_FIELD = 'device_id'
 
+    objects = CustomUserManager()
+
+    def __str__(self):
+        return str(self.device_id)

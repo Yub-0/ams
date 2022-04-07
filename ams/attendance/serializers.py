@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from attendance.models import DailyLogs, AttendanceLog
+from attendance.models import DailyLog, AttendanceLog
 from user.serializers import UsersSerializer
 
 
@@ -8,7 +8,7 @@ class DailyLogsSerializer(serializers.ModelSerializer):
     user_details = UsersSerializer(source='user', read_only=True)
 
     class Meta:
-        model = DailyLogs
+        model = DailyLog
         fields = ['id', 'user', 'user_details', 'arrival_time', 'departure_time', 'day', 'remarks']
 
 

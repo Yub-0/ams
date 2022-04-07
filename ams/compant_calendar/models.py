@@ -2,7 +2,7 @@ from django.db import models
 from nepali_date import NepaliDate
 
 
-class Holidays(models.Model):
+class Holiday(models.Model):
     id = models.BigAutoField(primary_key=True)
     day = models.DateField(null=False)
     description = models.TextField(null=False)
