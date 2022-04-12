@@ -37,12 +37,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'attendance',
-    'compant_calendar',
+    'company_calendar',
     'user',
     'leave',
     'rest_framework',
     'corsheaders',
     'rest_framework_simplejwt',
+    'django_filters',
 ]
 AUTH_USER_MODEL = "user.MyUser"
 MIDDLEWARE = [
@@ -63,7 +64,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 ROOT_URLCONF = 'ams.urls'

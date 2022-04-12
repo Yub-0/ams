@@ -10,12 +10,18 @@ class Role(models.Model):
     role_name = models.CharField(unique=True, max_length=100)
     description = models.TextField(null=True, blank=True)
 
+    def __str__(self):
+        return self.role_name
+
 
 class Department(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True, blank=False, null=False)
     shift_start = models.TimeField(auto_now=False, blank=False, null=False)
     shift_end = models.TimeField(auto_now=False, blank=False, null=False)
+
+    def __str__(self):
+        return self.name
 
 
 class MyUser(AbstractBaseUser, PermissionsMixin):

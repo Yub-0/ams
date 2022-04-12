@@ -26,9 +26,6 @@ class DailyReportSerializer(serializers.Serializer):
     status = serializers.CharField()
     remarks = serializers.CharField()
 
-    class Meta:
-        ordering = ['device_id']
-
 
 class AttendanceReportSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()

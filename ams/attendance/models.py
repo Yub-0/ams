@@ -25,11 +25,17 @@ class DailyLog(models.Model):
     day = models.CharField(max_length=25, choices=DAYS, default=0)
     remarks = models.TextField(default="")
 
+    def __str__(self):
+        return str(self.departure_time)
+
 
 class AttendanceLog(models.Model):
     id = models.BigAutoField(primary_key=True)
     device_id = models.BigIntegerField(null=False)
     timestamp = models.DateTimeField(null=False)
     c_type = models.IntegerField(null=False)
+
+    def __str__(self):
+        return str(self.timestamp)
 
 

@@ -1,4 +1,5 @@
-from rest_framework import mixins, viewsets, status
+import generics as generics
+from rest_framework import mixins, viewsets, status, generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
@@ -7,6 +8,10 @@ from .models import DailyLog, AttendanceLog
 import pandas as pd
 import datetime
 from .serializers import AttendanceLogSerializer, DailyLogsSerializer, DailyReportSerializer, AttendanceReportSerializer
+from user import permissions
+from user.permissions import IsOwner
+
+from leave.models import StaffLeave
 
 
 class AttendanceSyncView(mixins.CreateModelMixin,
@@ -52,6 +57,17 @@ class ViewAttendanceLog(mixins.ListModelMixin,
         return Response(serializer.data)
 
 
+class ViewAttendanceDetail(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, permissions.IsOwner]
+    queryset = AttendanceLog.objects.all()
+    serializer_class = AttendanceLogSerializer
+
+    def get_queryset(self):
+        # after get all products on DB it will be filtered by its owner and return the queryset
+        owner_queryset = self.queryset.filter(device_id=self.request.user.device_id)
+        return owner_queryset
+
+
 class ViewDailyAttendance(mixins.ListModelMixin,
                           viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser, ]
@@ -59,7 +75,7 @@ class ViewDailyAttendance(mixins.ListModelMixin,
     u = MyUser.objects.all()
     for ats in at:
         for us in u:
-            # if pd.to_datetime(ats.timestamp).date() == datetime.date.today():
+            if pd.to_datetime(ats.timestamp).date() == datetime.date.today():
                 if ats.device_id == us.device_id:
                     if not DailyLog.objects.filter(user=ats.device_id,
                                                    ).exists():
@@ -98,23 +114,35 @@ class DaysReport(mixins.ListModelMixin,
     li = []
     u = MyUser.objects.all()
     d = DailyLog.objects.all()
+    l = StaffLeave.objects.all()
     for de in d:
         for us in u:
+            if not us.device_id == 1:
+                if not DailyLog.objects.filter(user=us).exists():
+                    for lo in l:
+                        if lo.user == us:
+                            report = [
+                                {"device_id": us.device_id, "name": us.name, "status": 'On Leave', "remarks": lo.description}]
+                            li.append(report)
+                        else:
+                            report = [
+                                {"device_id": us.device_id, "name": us.name, "status": 'Absent', "remarks": 'Not Arrived Yet'}]
+                            li.append(report)
+                if us.device_id == de.user.device_id:
+                    if de.arrival_time > us.department.shift_start and de.departure_time < us.department.shift_end:
+                        report = [{"device_id": us.device_id, "name": us.name, "status": 'Present',
+                                   "remarks": 'Arrived late departed early', }]
+                    elif de.arrival_time > us.department.shift_start and de.departure_time > us.department.shift_end:
+                        report = [{"device_id": us.device_id, "name": us.name, "status": 'Present',
+                                   "remarks": 'Arrived late departed late', }]
+                    elif de.arrival_time < us.department.shift_start and de.departure_time < us.department.shift_end:
+                        report = [{"device_id": us.device_id,  "name": us.name, "status": 'Present',
+                                   "remarks": 'Arrived early departed early'}]
+                    elif de.arrival_time < us.department.shift_start and de.departure_time > us.department.shift_end:
+                        report = [{"device_id": us.device_id,  "name": us.name, "status": 'Present',
+                                   "remarks": 'Arrived early departed late'}]
 
-            if not DailyLog.objects.filter(user=us).exists():
-                report = [
-                    {"device_id": us.device_id, "name": us.name, "status": 'Absent', "remarks": 'Not Arrived Yet'}]
-                li.append(report)
-            if us.device_id == de.user.device_id:
-                if de.arrival_time > us.department.shift_start:
-                    report = [{"device_id": us.device_id, "name": us.name, "status": 'Present', "remarks": 'Late'}]
-                elif de.arrival_time < us.department.shift_start:
-                    report = [{"device_id": us.device_id,  "name": us.name, "status": 'Present', "remarks": 'Early'}]
-                else:
-                    report = [{"device_id": us.device_id,  "name": us.name, "status": 'Present', "remarks": 'On_time'}
-                    ]
-
-                li.append(report)
+                    li.append(report)
                 # queryset = li
     # for us in u:
 
@@ -128,6 +156,7 @@ class DaysReport(mixins.ListModelMixin,
             res.append(results)
 
         return Response(res)
+
 
 
 

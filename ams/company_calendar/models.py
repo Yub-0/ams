@@ -4,7 +4,7 @@ from nepali_date import NepaliDate
 
 class Holiday(models.Model):
     id = models.BigAutoField(primary_key=True)
-    day = models.DateField(null=False)
+    day = models.DateField(null=False, unique=True)
     description = models.TextField(null=False)
 
     def _get_bs_date(self):

@@ -6,14 +6,12 @@ from user.models import Role, Department, MyUser
 
 
 class RolesSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Role
         fields = ['id', 'role_name', 'description']
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Department
         fields = ['id', 'name', 'shift_start', 'shift_end']
@@ -36,6 +34,14 @@ class UsersSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data.get('password'))
         return super(UsersSerializer, self).create(validated_data)
+
+
+class UserListSerializer(serializers.ModelSerializer):
+    department_details = DepartmentSerializer(source='department', read_only=True)
+
+    class Meta:
+        model = MyUser
+        fields = ['id', 'device_id', 'name', 'role', 'department_details']
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
