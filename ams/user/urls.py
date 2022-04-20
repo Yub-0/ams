@@ -18,7 +18,7 @@ list_role = RolesView.as_view({
     'get': 'list',
 })
 list_department = DepartmentsView.as_view({
-    'Uget': 'list',
+    'get': 'list',
 })
 all_user = UserListView.as_view({
     'get': 'list',
