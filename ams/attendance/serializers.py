@@ -9,15 +9,17 @@ class DailyLogsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DailyLog
-        fields = ['id', 'user', 'user_details', 'arrival_time', 'departure_time', 'day', 'remarks']
+        fields = ['id', 'user_details', 'arrival_time', 'departure_time', 'day', 'remarks']
 
 
-class AttendanceLogSerializer(serializers.ModelSerializer):
+class AttendanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AttendanceLog
         fields = ['id', 'device_id', 'timestamp', 'c_type', ]
 
+
+# class TodaysAttendanceSerializer(serializers.Model):
 
 class DailyReportSerializer(serializers.Serializer):
 

@@ -12,9 +12,12 @@ class IsAdminUser(permissions.BasePermission):
 class IsOwner(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
+        print(request.user)
+        print(obj.user)
         if request.user:
             if request.user.is_superuser:
                 return True
             else:
-                return obj.device_id == request.user.device_id
-
+                return obj.user.device_id == request.user.device_id
+    # def has_object_permission(self, request, view, obj):
+    #     return obj.user.device_id == request.user.device_id

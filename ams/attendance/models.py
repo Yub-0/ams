@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from django.db import models
 
 # Create your models here.
@@ -6,27 +8,17 @@ from django.db import models
 # from user.models import Users
 from user.models import MyUser
 
-DAYS = [
-    ('0', 'Sunday'),
-    ('1', 'Monday'),
-    ('2', 'Tuesday'),
-    ('3', 'Wednesday'),
-    ('4', 'Thursday'),
-    ('5', 'Friday'),
-    ('6', 'Saturday')
-]
-
 
 class DailyLog(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(MyUser, on_delete=models.PROTECT)
     arrival_time = models.TimeField(auto_now=False, blank=False, null=False)
     departure_time = models.TimeField(auto_now=False, blank=False, null=False)
-    day = models.CharField(max_length=25, choices=DAYS, default=0)
+    day = models.DateTimeField(default=timezone.now)
     remarks = models.TextField(default="")
 
     def __str__(self):
-        return str(self.departure_time)
+        return str(self.user.name)
 
 
 class AttendanceLog(models.Model):

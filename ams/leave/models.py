@@ -16,3 +16,6 @@ class StaffLeave(models.Model):
         return NepaliDate.to_nepali_date(self.date)
 
     bs_date = property(_get_bs_date)
+
+    def __str__(self):
+        return str(self.user)

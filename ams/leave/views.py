@@ -15,7 +15,7 @@ from user import permissions
 
 class UserLeave(viewsets.ViewSet):
 
-    permission_classes = [IsAuthenticated, ]
+    # permission_classes = [IsAuthenticated, ]
 
     def create(self, request):
 
@@ -28,7 +28,7 @@ class UserLeave(viewsets.ViewSet):
 
 class ViewLeave(viewsets.ViewSet):
 
-    permission_classes = [IsAuthenticated, IsAdminUser ]
+    # permission_classes = [IsAuthenticated, IsAdminUser ]
 
     def list(self, request):
         queryset = StaffLeave.objects.all()

@@ -5,8 +5,8 @@ from user.serializers import UsersSerializer
 
 
 class StaffLeaveSerializer(serializers.ModelSerializer):
-    user_detail = UsersSerializer(source='user', read_only=True)
+    # user_detail = UsersSerializer(source='user', read_only=True)
 
     class Meta:
         model = StaffLeave
-        fields = ['id', 'date', 'description', 'user', 'user_detail', ]
+        fields = ['id', 'date', 'description', 'user',  ]

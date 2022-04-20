@@ -1,9 +1,9 @@
 from django.urls import path
-from attendance.views import ViewAttendanceLog, ViewDailyAttendance, AttendanceSyncView, DaysReport
+from attendance.views import ViewAllAttendance, ViewDailyAttendance, AttendanceSyncView, TodaysReport
 
 from attendance import views
 
-all_attendance = ViewAttendanceLog.as_view({ #simply view all attendance
+all_attendance = ViewAllAttendance.as_view({ #simply view all attendance
     'get': 'list'
 })
 all_DAttendance = ViewDailyAttendance.as_view({ #view daily attendance
@@ -12,7 +12,7 @@ all_DAttendance = ViewDailyAttendance.as_view({ #view daily attendance
 sync_Attendance = AttendanceSyncView.as_view({ #sync all attendance from device
     'post': 'create'
 })
-show_DailyReport = DaysReport.as_view({ #show days report
+show_DailyReport = TodaysReport.as_view({ #show days report
     'get': 'list'
 })
 urlpatterns = [
@@ -20,5 +20,6 @@ urlpatterns = [
     path('viewDayAttendance', all_DAttendance, name='view todays attendance log(admin)'),
     path('syncAttendance/', sync_Attendance, name='sync all Attendance from device(admin)'),
     path('showReport', show_DailyReport, name='show todays report'),
-    path('attendanceDetail/', views.ViewAttendanceDetail.as_view(), name='view attendance details(user-specific)'),
+    # path('attendanceDetail/', views.ViewAttendanceDetail.as_view(), name='view attendance details(user-specific)'),
+    path('attendanceDetail/<int:pk>/', views.ViewAttendanceDetail.as_view(), name='view attendance details(user-specific)'),
 ]

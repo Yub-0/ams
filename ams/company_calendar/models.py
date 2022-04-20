@@ -11,3 +11,4 @@ class Holiday(models.Model):
         return NepaliDate.to_nepali_date(self.day)
 
     bs_date = property(_get_bs_date)
+
