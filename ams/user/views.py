@@ -29,7 +29,7 @@ class RegisterUserView(mixins.CreateModelMixin,
 
 class RegisterRolesView(mixins.CreateModelMixin,
                         viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated, IsAdminUser, ]
+    # permission_classes = [IsAuthenticated, IsAdminUser, ]
     queryset = Role.objects.all()
     serializer_class = RolesSerializer
 
@@ -42,7 +42,7 @@ class RegisterRolesView(mixins.CreateModelMixin,
 
 class RegisterDepartmentView(mixins.CreateModelMixin,
                              viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated, IsAdminUser, ]
+    # permission_classes = [IsAuthenticated, IsAdminUser, ]
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
 
@@ -55,7 +55,7 @@ class RegisterDepartmentView(mixins.CreateModelMixin,
 
 class RolesView(mixins.ListModelMixin,
                 viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated, IsAdminUser, ]
+    # permission_classes = [IsAuthenticated, IsAdminUser, ]
     pagination_class = PageNumberPagination
     queryset = Role.objects.all()
     serializer_class = RolesSerializer
@@ -94,20 +94,20 @@ class UserListView(mixins.ListModelMixin,
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
-        serializer = UsersSerializer(queryset, many=True)
+        serializer = UserListSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
 class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = MyUser.objects.all()
-    serializer_class = UsersSerializer
+    serializer_class = UserListSerializer
     lookup_field = 'pk'
     # permission_classes = [IsOwner]
 
     # def get_queryset(self):
     #     return MyUser.objects.filter(device_id=self.kwargs['pk'])
 
-    def retrieve(self, request,pk):
+    def retrieve(self, request, pk):
         user = self.get_object()
         serializer = self.get_serializer(user)
         return Response(serializer.data)

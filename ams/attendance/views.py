@@ -1,4 +1,3 @@
-import generics as generics
 from rest_framework import mixins, viewsets, status, generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -10,38 +9,37 @@ import datetime
 from .serializers import AttendanceSerializer, DailyLogsSerializer, DailyReportSerializer, AttendanceReportSerializer
 from user import permissions
 from attendance.permissions import IsOwner
-from django_filters.rest_framework import DjangoFilterBackend
 from leave.models import StaffLeave
-from rest_framework import filters
 
 
 class AttendanceSyncView(mixins.CreateModelMixin,
                          viewsets.GenericViewSet):
 
-    # def create(self, request):
-        # conn = connect_device()
-        # if conn is not None:
-        #     attds = conn.get_attendance()
-        #     # d_users = conn.get_users()
-        #     conn.disconnect()
-        #     for att in attds:
-        #         if not AttendanceLog.objects.filter(device_id=att.user_id,
-        #                                             timestamp=att.timestamp,
-        #                                             c_type=att.status).exists():
-        #             AttendanceLog.objects.create(
-        #                 device_id=att.user_id,
-        #                 timestamp=att.timestamp,
-        #                 c_type=att.status
-        #             )
-        permission_classes = [IsAuthenticated, IsAdminUser, ]
-        queryset = AttendanceLog.objects.all()
-        serializer_class = AttendanceSerializer
+# def create(self, request):
+#     conn = connect_device()
+#     if conn is not None:
+#         attds = conn.get_attendance()
+#         # d_users = conn.get_users()
+#         conn.disconnect()
+#         for att in attds:
+#             if not AttendanceLog.objects.filter(device_id=att.user_id,
+#                                                 timestamp=att.timestamp,
+#                                                 c_type=att.status).exists():
+#                 AttendanceLog.objects.create(
+#                     device_id=att.user_id,
+#                     time=pd.to_datetime(att.timestamp).date(),
+#                     date=pd.to_datetime(att.timestamp).time(),
+#                     c_type=att.status
+#                 )
+    permission_classes = [IsAuthenticated, IsAdminUser, ]
+    queryset = AttendanceLog.objects.all()
+    serializer_class = AttendanceSerializer
 
-        def create(self, request):
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ViewAllAttendance(mixins.ListModelMixin,
@@ -86,26 +84,26 @@ class ViewDailyAttendance(mixins.ListModelMixin,
     at = AttendanceLog.objects.all()
     u = MyUser.objects.all()
     for ats in at:
-        if pd.to_datetime(ats.timestamp).date() == datetime.date.today():
+        if ats.date == datetime.date.today():
             for us in u:
                 if ats.device_id == us.device_id:
                     if not DailyLog.objects.filter(user=ats.device_id,
                                                    ).exists():
                         DailyLog.objects.create(
                             user=us,
-                            arrival_time=pd.to_datetime(ats.timestamp).time(),
-                            departure_time=pd.to_datetime(ats.timestamp).time(),
-                            day=ats.timestamp,
+                            arrival_time=ats.time,
+                            departure_time=ats.time,
+                            day=ats.date,
                             remarks='Arrived',
                         )
     for ats in at:
-        if pd.to_datetime(ats.timestamp).date() == datetime.date.today():
+        if ats.date == datetime.date.today():
             for us in u:
                 if ats.device_id == us.device_id:
                     if DailyLog.objects.filter(user=ats.device_id,
                                                ).exists():
                         DailyLog.objects.filter(user=ats.device_id).update(
-                            departure_time=pd.to_datetime(ats.timestamp).time(),
+                            departure_time=ats.time,
                             remarks='Departed',
                         )
 
@@ -142,9 +140,8 @@ class TodaysReport(mixins.ListModelMixin,
                         "remarks": 'Not Arrived Yet'}]
                     li.append(report)
 
-
     for da in d:
-        if not pd.to_datetime(da.day).date() == datetime.date.today():
+        if not da.day == datetime.date.today():
             for leave in sl:
                 if leave.user == da.user:
                     report = [
@@ -160,7 +157,7 @@ class TodaysReport(mixins.ListModelMixin,
     for de in d:
         # print(pd.to_datetime(de.day).date())
         # print(datetime.date.today())
-        if pd.to_datetime(de.day).date() == datetime.date.today():
+        if de.day == datetime.date.today():
             de_id = de.user.device_id
             u_name = de.user.name
 

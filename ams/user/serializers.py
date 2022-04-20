@@ -8,7 +8,7 @@ from user.models import Role, Department, MyUser
 class RolesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
-        fields = ['id', 'role_name', 'description']
+        fields = ['id', 'name', 'description']
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -28,8 +28,8 @@ class UsersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MyUser
-        fields = ['id', 'name', 'password', 'role', 'device_id', 'department',
-                  'department_details']
+        fields = ['device_id', 'name', 'password', 'role', 'department',
+                  'department_details', 'is_active', 'is_staff', 'is_superuser']
 
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data.get('password'))
@@ -41,7 +41,7 @@ class UserListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MyUser
-        fields = ['id', 'device_id', 'name', 'role', 'department_details']
+        fields = ['device_id', 'name', 'role', 'department_details', 'is_active']
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):

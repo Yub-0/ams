@@ -16,13 +16,10 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AttendanceLog
-        fields = ['id', 'device_id', 'timestamp', 'c_type', ]
+        fields = ['id', 'device_id', 'time', 'date']
 
-
-# class TodaysAttendanceSerializer(serializers.Model):
 
 class DailyReportSerializer(serializers.Serializer):
-
     device_id = serializers.IntegerField()
     name = serializers.CharField()
     status = serializers.CharField()
