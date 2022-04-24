@@ -1,11 +1,12 @@
 from rest_framework import serializers
 
 from attendance.models import DailyLog, AttendanceLog
-from user.serializers import UsersSerializer
+
+from user.serializers import UserListSerializer
 
 
 class DailyLogsSerializer(serializers.ModelSerializer):
-    user_details = UsersSerializer(source='user', read_only=True)
+    user_details = UserListSerializer(source='user', read_only=True)
 
     class Meta:
         model = DailyLog

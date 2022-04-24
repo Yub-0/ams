@@ -1,8 +1,6 @@
 from leave.views import UserLeave
 from django.urls import path
 
-from leave import views
-
 from leave.views import ViewLeave
 
 create_leave = UserLeave.as_view({

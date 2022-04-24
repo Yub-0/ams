@@ -12,7 +12,7 @@ from attendance.permissions import IsOwner
 from leave.models import StaffLeave
 
 
-class AttendanceSyncView(mixins.CreateModelMixin,
+class SyncAttendanceView(mixins.CreateModelMixin,
                          viewsets.GenericViewSet):
 
 # def create(self, request):
@@ -42,12 +42,23 @@ class AttendanceSyncView(mixins.CreateModelMixin,
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+class AttendanceOfUserView(mixins.RetrieveModelMixin,
+                           viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def list(self, request, *args, **kwargs):
+        user = self.request.user
+        courses = AttendanceLog.objects.filter(device_id=user.device_id)
+        serializer = AttendanceSerializer(courses, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class ViewAllAttendance(mixins.ListModelMixin,
                         viewsets.GenericViewSet):
     # permission_classes = [IsAuthenticated, IsAdminUser, ]
     pagination_class = PageNumberPagination
     queryset = AttendanceLog.objects.all()
-    serializer_class = AttendanceSerializer
+    # serializer_class = AttendanceSerializer
 
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
@@ -55,19 +66,6 @@ class ViewAllAttendance(mixins.ListModelMixin,
         serializer = AttendanceSerializer(queryset, many=True)
         return Response(serializer.data)
 
-
-# class ViewAttendanceDetail(generics.ListAPIView):
-#         # permission_classes = [IsAuthenticated, IsAdminUser, ]
-#         pagination_class = PageNumberPagination
-#         queryset = AttendanceLog.objects.all()
-#         serializer_class = AttendanceSerializer
-#
-#         def list(self, request):
-#             # Note the use of `get_queryset()` instead of `self.queryset`
-#             queryset = self.get_queryset()
-#             serializer = AttendanceSerializer(queryset, many=True)
-#             return Response(serializer.data)
-#
 
 class ViewAttendanceDetail(generics.RetrieveAPIView):
     serializer_class = DailyLogsSerializer

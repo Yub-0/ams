@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 from rest_framework import viewsets, status
 
 from rest_framework.response import Response
@@ -9,7 +6,6 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from leave.models import StaffLeave
 
 from user.models import MyUser
-
 from user import permissions
 
 

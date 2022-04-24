@@ -45,7 +45,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'django_filters',
 ]
+
 AUTH_USER_MODEL = "user.MyUser"
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -65,7 +67,9 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'USER_ID_FIELD': 'device_id'
+
 }
 ROOT_URLCONF = 'ams.urls'
 
@@ -98,23 +102,14 @@ WSGI_APPLICATION = 'ams.wsgi.application'
 #     }
 # }
 DATABASES = {
-
     'default': {
-
         'ENGINE': 'django.db.backends.postgresql',
-
         'NAME': 'ams',
-
         'USER': 'postgres',
-
         'PASSWORD': 'Nepal123',
-
         'HOST': 'localhost',
-
         'PORT': '5432',
-
     }
-
 }
 
 

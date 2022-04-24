@@ -11,7 +11,6 @@ class CreateHolidays(mixins.CreateModelMixin,
                      viewsets.GenericViewSet):
 
     # permission_classes = [IsAuthenticated, IsAdminUser]
-    queryset = Holiday.objects.all()
     serializer_class = HolidaySerializer
 
     def create(self, request):
@@ -26,10 +25,9 @@ class ViewHolidays(mixins.ListModelMixin,
     permission_classes = [AllowAny]
     pagination_class = PageNumberPagination
     queryset = Holiday.objects.all()
-    serializer_class = HolidaySerializer
 
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
         serializer = HolidaySerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

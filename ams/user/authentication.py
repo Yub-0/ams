@@ -23,7 +23,6 @@ class ExampleAuthentication(authentication.BaseAuthentication):
         return (user, token) # authentication successful
 
 
-# class CustomAuth(authentication.BaseAuthentication):
 
 
 
