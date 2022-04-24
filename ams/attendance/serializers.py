@@ -6,11 +6,11 @@ from user.serializers import UserListSerializer
 
 
 class DailyLogsSerializer(serializers.ModelSerializer):
-    user_details = UserListSerializer(source='user', read_only=True)
+    # user_details = UserListSerializer(source='user', read_only=True)
 
     class Meta:
         model = DailyLog
-        fields = ['id', 'user_details', 'arrival_time', 'departure_time', 'day', 'remarks']
+        fields = ['id', 'arrival_time', 'departure_time', 'day', 'remarks']
 
 
 class AttendanceSerializer(serializers.ModelSerializer):

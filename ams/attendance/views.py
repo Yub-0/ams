@@ -12,8 +12,7 @@ from attendance.permissions import IsOwner
 from leave.models import StaffLeave
 
 
-class SyncAttendanceView(mixins.CreateModelMixin,
-                         viewsets.GenericViewSet):
+class SyncAttendanceView(generics.CreateAPIView):
 
 # def create(self, request):
 #     conn = connect_device()
@@ -35,32 +34,30 @@ class SyncAttendanceView(mixins.CreateModelMixin,
     queryset = AttendanceLog.objects.all()
     serializer_class = AttendanceSerializer
 
-    def create(self, request):
+    def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class AttendanceOfUserView(mixins.RetrieveModelMixin,
-                           viewsets.GenericViewSet):
+class AttendanceOfUserView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated, IsOwner]
 
-    def list(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         user = self.request.user
         courses = AttendanceLog.objects.filter(device_id=user.device_id)
         serializer = AttendanceSerializer(courses, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ViewAllAttendance(mixins.ListModelMixin,
-                        viewsets.GenericViewSet):
+class ViewAllAttendance(generics.ListAPIView):
     # permission_classes = [IsAuthenticated, IsAdminUser, ]
     pagination_class = PageNumberPagination
     queryset = AttendanceLog.objects.all()
     # serializer_class = AttendanceSerializer
 
-    def list(self, request):
+    def get(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
         serializer = AttendanceSerializer(queryset, many=True)
@@ -76,24 +73,40 @@ class ViewAttendanceDetail(generics.RetrieveAPIView):
         return DailyLog.objects.filter(user=self.kwargs['pk'])
 
 
-class ViewDailyAttendance(mixins.ListModelMixin,
-                          viewsets.GenericViewSet):
+class ViewDailyAttendance(generics.ListAPIView):
     # permission_classes = [IsAuthenticated, IsAdminUser, ]
     at = AttendanceLog.objects.all()
     u = MyUser.objects.all()
+    d = DailyLog.objects.all()
     for ats in at:
-        if ats.date == datetime.date.today():
-            for us in u:
-                if ats.device_id == us.device_id:
-                    if not DailyLog.objects.filter(user=ats.device_id,
-                                                   ).exists():
-                        DailyLog.objects.create(
-                            user=us,
-                            arrival_time=ats.time,
-                            departure_time=ats.time,
-                            day=ats.date,
-                            remarks='Arrived',
-                        )
+        for us in u:
+            if ats.device_id == us.device_id:
+                # for da in d:
+                #     if DailyLog.objects.filter(user=ats.device_id, arrival_time=da.arrival_time,
+                #                                departure_time=da.departure_time).exists():
+                #         DailyLog.objects.create(
+                #             user=us,
+                #             arrival_time=ats.time,
+                #             departure_time=None,
+                #             day=ats.date,
+                #             remarks='Arrived',
+                #         )
+                if not DailyLog.objects.filter(user=us, day=datetime.date.today()
+                                               ).exists():
+                    DailyLog.objects.create(
+                        user=us,
+                        arrival_time=ats.time,
+                        departure_time=None,
+                        day=ats.date,
+                        remarks='Arrived',
+                    )
+                else:
+                    DailyLog.objects.filter(user=ats.device_id, departure_time=None,
+                                            day=datetime.date.today()).update(
+                        departure_time=ats.time,
+                        remarks='Departed',
+                    )
+
     for ats in at:
         if ats.date == datetime.date.today():
             for us in u:
@@ -107,17 +120,15 @@ class ViewDailyAttendance(mixins.ListModelMixin,
 
     pagination_class = PageNumberPagination
     queryset = DailyLog.objects.all()
-    serializer_class = DailyLogsSerializer
 
-    def list(self, request):
+    def get(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
         serializer = DailyLogsSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
-class TodaysReport(mixins.ListModelMixin,
-                 viewsets.GenericViewSet):
+class TodaysReport(generics.ListAPIView):
     # permission_classes = [IsAuthenticated, IsAdminUser, ]
     li = []
     u = MyUser.objects.all()
@@ -152,27 +163,27 @@ class TodaysReport(mixins.ListModelMixin,
                     "remarks": 'Not Arrived Yet'}]
                 li.append(report)
 
-    for de in d:
-        # print(pd.to_datetime(de.day).date())
-        # print(datetime.date.today())
-        if de.day == datetime.date.today():
-            de_id = de.user.device_id
-            u_name = de.user.name
-
-            if de.arrival_time > de.user.department.shift_start and de.departure_time <= de.user.department.shift_end:
-                report = [{"device_id": de_id, "name": u_name, "status": 'Present',
-                           "remarks": 'Arrived late departed early', }]
-            elif de.arrival_time > de.user.department.shift_start and de.departure_time >= de.user.department.shift_end:
-                report = [{"device_id": de_id, "name": u_name, "status": 'Present',
-                           "remarks": 'Arrived late departed late', }]
-            elif de.arrival_time < de.user.department.shift_start and de.departure_time <= de.user.department.shift_end:
-                report = [{"device_id": de_id,  "name": u_name, "status": 'Present',
-                           "remarks": 'Arrived early departed early'}]
-            elif de.arrival_time < de.user.department.shift_start and de.departure_time >= de.user.department.shift_end:
-                report = [{"device_id": de_id,  "name": u_name, "status": 'Present',
-                           "remarks": 'Arrived early departed late'}]
-
-            li.append(report)
+    # for de in d:
+    #     # print(pd.to_datetime(de.day).date())
+    #     # print(datetime.date.today())
+    #     if de.day == datetime.date.today():
+    #         de_id = de.user.device_id
+    #         u_name = de.user.name
+    #
+    #         if de.arrival_time > de.user.department.shift_start and de.departure_time <= de.user.department.shift_end:
+    #             report = [{"device_id": de_id, "name": u_name, "status": 'Present',
+    #                        "remarks": 'Arrived late departed early', }]
+    #         elif de.arrival_time > de.user.department.shift_start and de.departure_time >= de.user.department.shift_end:
+    #             report = [{"device_id": de_id, "name": u_name, "status": 'Present',
+    #                        "remarks": 'Arrived late departed late', }]
+    #         elif de.arrival_time < de.user.department.shift TodaysReport,_start and de.departure_time <= de.user.department.shift_end:
+    #             report = [{"device_id": de_id,  "name": u_name, "status": 'Present',
+    #                        "remarks": 'Arrived early departed early'}]
+    #         elif de.arrival_time < de.user.department.shift_start and de.departure_time >= de.user.department.shift_end:
+    #             report = [{"device_id": de_id,  "name": u_name, "status": 'Present',
+    #                        "remarks": 'Arrived early departed late'}]
+    #
+    #         li.append(report)
         # else:
         #     for leave in sl:
         #         if leave.user == de.user:
@@ -188,7 +199,7 @@ class TodaysReport(mixins.ListModelMixin,
 
     queryset = li
 
-    def list(self, request):
+    def get(self, request):
         res = []
         queryset = self.get_queryset()
         for a in queryset:

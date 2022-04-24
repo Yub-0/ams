@@ -13,7 +13,7 @@ class DailyLog(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(MyUser, on_delete=models.PROTECT)
     arrival_time = models.TimeField(auto_now=False, blank=False, null=False)
-    departure_time = models.TimeField(auto_now=False, blank=False, null=False)
+    departure_time = models.TimeField(auto_now=False, blank=True, null=True)
     day = models.DateField(default=datetime.date.today)
     remarks = models.TextField(default="")
 

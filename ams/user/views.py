@@ -13,12 +13,11 @@ from user.permissions import IsOwner, IsAdminUser
 from rest_framework import filters
 
 
-class RegisterUserView(mixins.CreateModelMixin,
-                       viewsets.GenericViewSet):
+class RegisterUserView(generics.CreateAPIView):
     permission_classes = [AllowAny, ]
     serializer_class = UserSerializer
 
-    def create(self, request):
+    def post(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -30,16 +29,15 @@ class RegisterUserView(mixins.CreateModelMixin,
             return Response({"message: Password cannot be empty"}, status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
             return Response({"message": "User with device id already exists."}, status=status.HTTP_409_CONFLICT)
-    # def perform_create(self, serializer):
-    #     serializer.save(owner=self.request.user)
+        # def perform_create(self, serializer):
+        #     serializer.save(owner=self.request.user)
 
 
-class RegisterRolesView(mixins.CreateModelMixin,
-                        viewsets.GenericViewSet):
+class RegisterRolesView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser, ]
     serializer_class = RoleSerializer
 
-    def create(self, request):
+    def post(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -51,8 +49,7 @@ class RegisterRolesView(mixins.CreateModelMixin,
             return Response({"message": "Role name already exists."}, status=status.HTTP_409_CONFLICT)
 
 
-class RegisterDepartmentView(mixins.CreateModelMixin,
-                             viewsets.GenericViewSet):
+class RegisterDepartmentView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser, ]
     serializer_class = DepartmentSerializer
 
@@ -64,19 +61,19 @@ class RegisterDepartmentView(mixins.CreateModelMixin,
         elif not serializer.data['name'] or not serializer.data['shift_start'] or not serializer.data['shift_end']:
             print("hello", serializer.data['name'], serializer.data['shift_start'], serializer.data['shift_end'])
             return Response({"message": "Field cannot be Empty"}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        elif not type(serializer.data['shift_start']) is datetime.time or not type(serializer.data['shift_end'] is datetime.time):
+        elif not type(serializer.data['shift_start']) is datetime.time or not type(
+                serializer.data['shift_end'] is datetime.time):
             return Response({"message": "Enter valid time"}, status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
             return Response({"message": "Department name already exists."}, status=status.HTTP_409_CONFLICT)
 
 
-class RolesView(mixins.ListModelMixin,
-                viewsets.GenericViewSet):
+class RoleView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser, ]
     pagination_class = PageNumberPagination
     queryset = Role.objects.all()
 
-    def list(self, request):
+    def get(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
         serializer = RoleSerializer(queryset, many=True)
@@ -87,16 +84,17 @@ class RoleDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
     lookup_field = 'pk'
+    permission_classes = [IsAdminUser]
 
     # def get_queryset(self):
     #     return MyUser.objects.filter(device_id=self.kwargs['pk'])
 
-    def retrieve(self, request, pk):
+    def get(self, request, pk):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def update(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
 
@@ -116,13 +114,12 @@ class RoleDetail(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DepartmentsView(mixins.ListModelMixin,
-                      viewsets.GenericViewSet):
+class DepartmentView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser, ]
     pagination_class = PageNumberPagination
     queryset = Department.objects.all()
 
-    def list(self, request):
+    def get(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
         serializer = DepartmentSerializer(queryset, many=True)
@@ -133,17 +130,17 @@ class DepartmentDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
     lookup_field = 'pk'
-    permission_classes = [IsOwner]
+    permission_classes = [IsAdminUser]
 
     # def get_queryset(self):
     #     return MyUser.objects.filter(device_id=self.kwargs['pk'])
 
-    def retrieve(self, request, pk):
+    def get(self, request, pk):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def update(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
 
@@ -164,17 +161,13 @@ class DepartmentDetail(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class UserListView(mixins.ListModelMixin,
-                   viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated, IsAdminUser ]
+class UserListView(generics.ListAPIView):
+
+    permission_classes = [IsAuthenticated, IsAdminUser, ]
     pagination_class = PageNumberPagination
     queryset = MyUser.objects.all()
 
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name', 'role']
-
-    def list(self, request):
-        # Note the use of `get_queryset()` instead of `self.queryset`
+    def get(self, request):
         queryset = self.get_queryset()
         serializer = UserListSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -189,12 +182,12 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     # def get_queryset(self):
     #     return MyUser.objects.filter(device_id=self.kwargs['pk'])
 
-    def retrieve(self, request, pk):
+    def get(self, request, pk):
         user = self.get_object()
         serializer = self.get_serializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def update(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
 
