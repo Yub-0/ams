@@ -1,13 +1,11 @@
-from rest_framework import mixins, viewsets, status, generics
+from rest_framework import status, generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from user.models import MyUser
 from .models import DailyLog, AttendanceLog
-import pandas as pd
 import datetime
 from .serializers import AttendanceSerializer, DailyLogsSerializer, DailyReportSerializer, AttendanceReportSerializer
-from user import permissions
 from attendance.permissions import IsOwner
 from leave.models import StaffLeave
 
@@ -30,7 +28,7 @@ class SyncAttendanceView(generics.CreateAPIView):
 #                     date=pd.to_datetime(att.timestamp).time(),
 #                     c_type=att.status
 #                 )
-    permission_classes = [IsAuthenticated, IsAdminUser, ]
+#     permission_classes = [IsAuthenticated, IsAdminUser, ]
     queryset = AttendanceLog.objects.all()
     serializer_class = AttendanceSerializer
 
@@ -42,7 +40,7 @@ class SyncAttendanceView(generics.CreateAPIView):
 
 
 class AttendanceOfUserView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated, IsOwner]
+    permission_classes = [ IsOwner]
 
     def get(self, request, *args, **kwargs):
         user = self.request.user
@@ -61,16 +59,31 @@ class ViewAllAttendance(generics.ListAPIView):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
         serializer = AttendanceSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ViewAttendanceDetail(generics.RetrieveAPIView):
-    serializer_class = DailyLogsSerializer
-    permission_classes = [IsOwner]
+# class ViewAttendanceDetail(generics.GenericAPIView):
+#     serializer_class = AttendanceSerializer
+#     permission_classes = [IsOwner]
+#
+#     # def get_queryset(self, device_id):
+#     #     return AttendanceLog.objects.filter(device_id=device_id)
+#
+#     def get(self):
+#         print("Aaa")
+#         print(AttendanceLog.objects.filter(device_id=pk))
+#         return "a"
+
+class ViewAttendanceDate(generics.ListAPIView):
+    serializer_class = AttendanceSerializer
 
     def get_queryset(self):
-        print(self.kwargs['pk'])
-        return DailyLog.objects.filter(user=self.kwargs['pk'])
+        """
+        This view should return a list of all the purchases for
+        the user as determined by the username portion of the URL.
+        """
+        date = self.kwargs['date']
+        return AttendanceLog.objects.filter(date=date)
 
 
 class ViewDailyAttendance(generics.ListAPIView):
@@ -209,5 +222,24 @@ class TodaysReport(generics.ListAPIView):
         return Response(res)
 
 
+class test(generics.GenericAPIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        user = self.request.user
+        if user.device_id == pk or user.role.name == "Admin":
+            date = request.GET.get('date')
+            time = request.GET.get('time')
+            if date is not None:
+                attds = AttendanceLog.objects.filter(device_id=pk, date=date)
+            elif time is not None:
+                attds = AttendanceLog.objects.filter(device_id=pk, time=time)
+            else:
+                attds = AttendanceLog.objects.filter(device_id=pk)
+            attds = AttendanceSerializer(attds, many=True).data
+            return Response(attds)
+        else:
+            return Response({'message':"Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
