@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from user.models import MyUser
 from .models import DailyLog, AttendanceLog
 import datetime
-
+from datetime import timedelta
+from rest_framework.filters import OrderingFilter
 from .pagination import CustomPagination
 from .serializers import AttendanceSerializer, DailyLogsSerializer, DailyReportSerializer
 from attendance.permissions import IsOwner
@@ -40,10 +41,38 @@ class SyncAttendanceView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class AttendanceOfUserView(generics.RetrieveAPIView):
-    permission_classes = [IsOwner]
+class ViewAllAttendance(generics.ListAPIView):
+    # permission_classes = [IsAuthenticated, IsAdminUser, ]
+    queryset = AttendanceLog.objects.all()
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request):
+        queryset = self.get_queryset()
+        serializer = AttendanceSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ViewAllAttendancePag(generics.ListAPIView):
+    # permission_classes = [IsAuthenticated, IsAdminUser, ]
+    queryset = AttendanceLog.objects.all()
+    # filter_backends = [OrderingFilter]
+    # ordering_fields = '__all__'
+
+    def get(self, request):
+        pagination_class = CustomPagination
+        paginator = pagination_class()
+
+        queryset = self.get_queryset()
+        page = paginator.paginate_queryset(queryset, request)
+        serializer = AttendanceSerializer(page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+# implement this
+class AttendanceOfUserView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
         user = self.request.user
         courses = AttendanceLog.objects.filter(device_id=user.device_id)
         serializer = AttendanceSerializer(courses, many=True)
@@ -51,25 +80,29 @@ class AttendanceOfUserView(generics.RetrieveAPIView):
 
 
 class ViewAttendanceDetail(generics.GenericAPIView):
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        pagination_class = CustomPagination
+        paginator = pagination_class()
         user = self.request.user
         if user.role.name == "Admin":
             device_id = request.GET.get('device_id')
             time = request.GET.get('time')
-            startdate = request.GET.get('sdate')
-            enddate = request.GET.get('edate')
-            if startdate and enddate and device_id is not None:
-                print("true")
-                attds = AttendanceLog.objects.filter(device_id=device_id, date__range=[startdate, enddate])
-            elif startdate and enddate is not None:
-                attds = AttendanceLog.objects.filter(date__range=[startdate, enddate])
+            start_date = request.GET.get('sdate')
+            end_date = request.GET.get('edate')
+            if start_date and end_date and device_id is not None:
+                attds = AttendanceLog.objects.filter(device_id=device_id, date__range=[start_date, end_date])
+            elif start_date and end_date is not None:
+                attds = AttendanceLog.objects.filter(date__range=[start_date, end_date])
             elif device_id is not None:
                 attds = AttendanceLog.objects.filter(device_id=device_id)
-            attds = AttendanceSerializer(attds, many=True).data
-            return Response(attds)
+
+            page = paginator.paginate_queryset(attds, request)
+            attds = AttendanceSerializer(page, many=True).data
+            return paginator.get_paginated_response(attds)
+
+            # return Response(attds)
         else:
             return Response({'message': "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -80,10 +113,10 @@ class ViewSpecificAttendance(generics.GenericAPIView):
         user = self.request.user
         if user.device_id == pk or user.role.name == "Admin":
             time = request.GET.get('time')
-            startdate = request.GET.get('sdate')
-            enddate = request.GET.get('edate')
-            if startdate and enddate is not None:
-                attds = AttendanceLog.objects.filter(date__range=[startdate, enddate])
+            start_date = request.GET.get('sdate')
+            end_date = request.GET.get('edate')
+            if start_date and end_date is not None:
+                attds = AttendanceLog.objects.filter(device_id=pk,date__range=[start_date, end_date])
             elif time is not None:
                 attds = AttendanceLog.objects.filter(device_id=pk, time=time)
             else:
@@ -91,49 +124,20 @@ class ViewSpecificAttendance(generics.GenericAPIView):
             attds = AttendanceSerializer(attds, many=True).data
             return Response(attds)
         else:
-            return Response({'message':"Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'message': "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-class ViewAllAttendancePag(generics.ListAPIView):
-    # permission_classes = [IsAuthenticated, IsAdminUser, ]
-    queryset = AttendanceLog.objects.all()
-
-    def get(self, request):
-        # Note the use of `get_queryset()` instead of `self.queryset`
-        pagination_class = CustomPagination
-        paginator = pagination_class()
-
-        queryset = self.get_queryset()
-        page = paginator.paginate_queryset(queryset, request)
-        serializer = AttendanceSerializer(page, many=True)
-        # return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return paginator.get_paginated_response(serializer.data)
-
-
-class ViewAllAttendance(generics.ListAPIView):
-    # permission_classes = [IsAuthenticated, IsAdminUser, ]
-    queryset = AttendanceLog.objects.all()
+class ReportView(generics.GenericAPIView):
+    queryset = DailyLog.objects.all()
 
     def get(self, request):
-
-        queryset = self.get_queryset()
-        serializer = AttendanceSerializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class ViewDailyAttendance(generics.ListAPIView):
-    # permission_classes = [IsAuthenticated, IsAdminUser, ]
-    at = AttendanceLog.objects.all()
-    u = MyUser.objects.all()
-    d = DailyLog.objects.all()
-    for ats in at:
-        if ats.date == datetime.date.today():
+        at = AttendanceLog.objects.all()
+        u = MyUser.objects.all()
+        for ats in at:
             for us in u:
                 if us.device_id == ats.device_id:
-                    if not DailyLog.objects.filter(user=us, day=datetime.date.today()
+                    if not DailyLog.objects.filter(user=us, day=ats.date
                                                    ).exists():
-
                         DailyLog.objects.create(
                             user=us,
                             arrival_time=ats.time,
@@ -141,58 +145,90 @@ class ViewDailyAttendance(generics.ListAPIView):
                             day=ats.date,
                             remarks='Arrived',
                         )
-                    # else:
-                    #     DailyLog.objects.filter(user=ats.device_id, departure_time=None,
-                    #                             day=datetime.date.today()).update(
-                    #         departure_time=ats.time,
-                    #         remarks='Departed',
-                    #     )
-                    else:
-                        for de in d:
-                            if de.arrival_time and de.departure_time is None:
-                                DailyLog.objects.filter(user=ats.device_id, departure_time=None,
-                                                        day=datetime.date.today()).update(
-                                        departure_time=ats.time,
-                                        remarks='Departed',
-                                    )
-                            elif de.arrival_time and de.departure_time:
-                                DailyLog.objects.create(
-                                    user=us,
-                                    arrival_time=ats.time,
-                                    departure_time=None,
-                                    day=ats.date,
-                                    remarks='Arrived again',
-                                )
-                            else:
-                                DailyLog.objects.create(
-                                    user=us,
-                                    arrival_time=ats.time,
+                    elif DailyLog.objects.filter(user=us, day=ats.date
+                                                 ).exists():
+                        DailyLog.objects.filter(user=us, day=ats.date).update(
+                            departure_time=ats.time,
+                            remarks='Departed',
+                        )
+
+        today = datetime.date.today()
+        yesterday = today - timedelta(days=1)
+        user = self.request.user
+        if user.role.name == "Admin":
+            start_date = request.GET.get('sdate')
+            end_date = request.GET.get('edate')
+            if start_date and end_date is not None:
+                attds = DailyLog.objects.filter(day__range=[start_date, end_date])
+            else:
+                attds = DailyLog.objects.filter(day__range=[yesterday, yesterday])
+            attds = DailyLogsSerializer(attds, many=True).data
+            return Response(attds)
+        else:
+            return Response({'message': "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        # queryset = self.get_queryset()
+        # serializer = DailyLogsSerializer(queryset, many=True)
+        # return Response(serializer.data)
 
 
-                                    departure_time=None,
-                                    day=ats.date,
-                                    remarks='Arrived',
-                                )
-
-
-    # for ats in at:
-    #     if ats.date == datetime.date.today():
-    #         for us in u:
-    #             if ats.device_id == us.device_id:
-    #                 if DailyLog.objects.filter(user=ats.device_id,
-    #                                            ).exists():
-    #                     DailyLog.objects.filter(user=ats.device_id).update(
-    #                         departure_time=ats.time,
-    #                         remarks='Departed',
-    #                     )
-
-    queryset = DailyLog.objects.all()
-
-    def get(self, request):
-        # Note the use of `get_queryset()` instead of `self.queryset`
-        queryset = self.get_queryset()
-        serializer = DailyLogsSerializer(queryset, many=True)
-        return Response(serializer.data)
+# class ViewDailyAttendance(generics.ListAPIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser, ]
+#     queryset = DailyLog.objects.all()
+#
+#     def get(self, request):
+#         at = AttendanceLog.objects.all()
+#         u = MyUser.objects.all()
+#         d = DailyLog.objects.all()
+#         for ats in at:
+#             if ats.date == datetime.date.today():
+#                 for us in u:
+#                     if us.device_id == ats.device_id:
+#                         if not DailyLog.objects.filter(user=us, day=datetime.date.today()
+#                                                        ).exists():
+#
+#                             DailyLog.objects.create(
+#                                 user=us,
+#                                 arrival_time=ats.time,
+#                                 departure_time=None,
+#                                 day=ats.date,
+#                                 remarks='Arrived',
+#                             )
+#                         # else:
+#                         #     DailyLog.objects.filter(user=ats.device_id, departure_time=None,
+#                         #                             day=datetime.date.today()).update(
+#                         #         departure_time=ats.time,
+#                         #         remarks='Departed',
+#                         #     )
+#                         else:
+#                             for de in d:
+#                                 if de.arrival_time and de.departure_time is None:
+#                                     DailyLog.objects.filter(user=ats.device_id, departure_time=None,
+#                                                             day=datetime.date.today()).update(
+#                                         departure_time=ats.time,
+#                                         remarks='Departed',
+#                                     )
+#                                 elif de.arrival_time and de.departure_time:
+#                                     DailyLog.objects.create(
+#                                         user=us,
+#                                         arrival_time=ats.time,
+#                                         departure_time=None,
+#                                         day=ats.date,
+#                                         remarks='Arrived again',
+#                                     )
+#                                 else:
+#                                     DailyLog.objects.create(
+#                                         user=us,
+#                                         arrival_time=ats.time,
+#
+#                                         departure_time=None,
+#                                         day=ats.date,
+#                                         remarks='Arrived',
+#                                     )
+#
+#         # Note the use of `get_queryset()` instead of `self.queryset`
+#         queryset = self.get_queryset()
+#         serializer = DailyLogsSerializer(queryset, many=True)
+#         return Response(serializer.data)
 
 
 class TodaysReport(generics.ListAPIView):
@@ -274,7 +310,6 @@ class TodaysReport(generics.ListAPIView):
             res.append(results)
 
         return Response(res)
-
 
 
 

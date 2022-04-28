@@ -1,6 +1,4 @@
-import datetime
-
-from rest_framework import mixins, viewsets, status, permissions, generics
+from rest_framework import status, generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -11,7 +9,6 @@ from user.serializers import UserSerializer, RoleSerializer, DepartmentSerialize
     MyTokenObtainPairSerializer, UserListSerializer
 
 from user.permissions import IsOwner, IsAdminUser
-from rest_framework import filters
 
 
 class RegisterUserView(generics.CreateAPIView):
@@ -23,15 +20,8 @@ class RegisterUserView(generics.CreateAPIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif not serializer.data['name'] or not serializer.data['device_id'] or not serializer.data['role'] \
-                or not serializer.data['department']:
-            return Response({"message: Field cannot be empty!"}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        elif not serializer.data['password']:
-            return Response({"message: Password cannot be empty"}, status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            return Response({"message": "User with device id already exists."}, status=status.HTTP_409_CONFLICT)
-        # def perform_create(self, serializer):
-        #     serializer.save(owner=self.request.user)
+            return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
 
 
 class RegisterRolesView(generics.CreateAPIView):
@@ -43,11 +33,8 @@ class RegisterRolesView(generics.CreateAPIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif not serializer.data['name']:
-            print("hello", serializer.data['name'])
-            return Response({"message": "Name cannot be Empty"}, status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            return Response({"message": "Role name already exists."}, status=status.HTTP_409_CONFLICT)
+            return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
 
 
 class RegisterDepartmentView(generics.CreateAPIView):
@@ -59,36 +46,25 @@ class RegisterDepartmentView(generics.CreateAPIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif not serializer.data['name'] or not serializer.data['shift_start'] or not serializer.data['shift_end']:
-            print("hello", serializer.data['name'], serializer.data['shift_start'], serializer.data['shift_end'])
-            return Response({"message": "Field cannot be Empty"}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        elif not type(serializer.data['shift_start']) is datetime.time or not type(
-                serializer.data['shift_end'] is datetime.time):
-            return Response({"message": "Enter valid time"}, status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            return Response({"message": "Department name already exists."}, status=status.HTTP_409_CONFLICT)
+            return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
 
 
 class RoleView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser, ]
-    pagination_class = PageNumberPagination
     queryset = Role.objects.all()
 
     def get(self, request):
-        # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
         serializer = RoleSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class RoleDetail(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
     lookup_field = 'pk'
-    permission_classes = [IsAdminUser]
-
-    # def get_queryset(self):
-    #     return MyUser.objects.filter(device_id=self.kwargs['pk'])
 
     def get(self, request, pk):
         instance = self.get_object()
@@ -103,7 +79,7 @@ class RoleDetail(generics.RetrieveUpdateDestroyAPIView):
             serializer.save()
             return Response({"message": " updated successfully"}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "failed", "details": serializer.errors})
+            return Response({"message": "failed", "details": serializer.errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -111,13 +87,12 @@ class RoleDetail(generics.RetrieveUpdateDestroyAPIView):
 
         if serializer.is_valid():
             instance.delete()
-            return Response({"message": "Deleted"}, status=status.HTTP_202_ACCEPTED)
+            return Response({"message": "Deleted"}, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class DepartmentView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser, ]
-    pagination_class = PageNumberPagination
     queryset = Department.objects.all()
 
     def get(self, request):
@@ -128,10 +103,10 @@ class DepartmentView(generics.ListAPIView):
 
 
 class DepartmentDetail(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
     lookup_field = 'pk'
-    permission_classes = [IsAdminUser]
 
     # def get_queryset(self):
     #     return MyUser.objects.filter(device_id=self.kwargs['pk'])
@@ -150,7 +125,7 @@ class DepartmentDetail(generics.RetrieveUpdateDestroyAPIView):
             return Response({"message": " updated successfully"}, status=status.HTTP_200_OK)
 
         else:
-            return Response({"message": "failed", "details": serializer.errors})
+            return Response({"message": "failed", "details": serializer.errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -158,7 +133,7 @@ class DepartmentDetail(generics.RetrieveUpdateDestroyAPIView):
 
         if serializer.is_valid():
             instance.delete()
-            return Response({"message": "Deleted"})
+            return Response({"message": "Deleted"}, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -175,13 +150,10 @@ class UserListView(generics.ListAPIView):
 
 
 class UserDetail(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, IsOwner]
     queryset = MyUser.objects.all()
     serializer_class = UserListSerializer
     lookup_field = 'pk'
-    permission_classes = [IsOwner]
-
-    # def get_queryset(self):
-    #     return MyUser.objects.filter(device_id=self.kwargs['pk'])
 
     def get(self, request, pk):
         user = self.get_object()
@@ -197,7 +169,7 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
             return Response({"message": " updated successfully"}, status=status.HTTP_200_OK)
 
         else:
-            return Response({"message": "failed", "details": serializer.errors})
+            return Response({"message": "failed", "details": serializer.errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     def delete(self, request, *args, **kwargs):
         user = self.get_object()
@@ -205,7 +177,7 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
 
         if serializer.is_valid():
             user.delete()
-            return Response({"message": "Deleted"}, status=status.HTTP_202_ACCEPTED)
+            return Response({"message": "Deleted"}, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
