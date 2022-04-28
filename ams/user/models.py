@@ -42,3 +42,4 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return str(self.device_id)
+

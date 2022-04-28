@@ -1,8 +1,3 @@
-from django.utils import timezone
-
-from django.db import models
-
-# Create your models here.
 from django.db import models
 import datetime
 # from user.models import Users

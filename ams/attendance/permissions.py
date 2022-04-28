@@ -17,5 +17,3 @@ class IsOwner(permissions.BasePermission):
                 return True
             else:
                 return obj.device_id == request.user.device_id
-    # def has_object_permission(self, request, view, obj):
-    #     return obj.user.device_id == request.user.device_id

@@ -54,4 +54,3 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['role'] = user.role.name
         token['department'] = user.department.name
         return token
-

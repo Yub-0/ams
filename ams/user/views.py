@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from user.models import MyUser, Department, Role
-from user.serializers import UserSerializer, RoleSerializer, DepartmentSerializer, MyTokenObtainPairSerializer, UserListSerializer
+from user.serializers import UserSerializer, RoleSerializer, DepartmentSerializer,\
+    MyTokenObtainPairSerializer, UserListSerializer
 
 from user.permissions import IsOwner, IsAdminUser
 from rest_framework import filters
@@ -211,6 +212,5 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
 class MyObtainTokenPairView(TokenObtainPairView):
     permission_classes = (AllowAny,)
     serializer_class = MyTokenObtainPairSerializer
-
 
 
