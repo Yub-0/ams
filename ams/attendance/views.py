@@ -53,29 +53,34 @@ class ViewAllAttendance(generics.ListAPIView):
 
 class ViewAllAttendancePag(generics.ListAPIView):
     # permission_classes = [IsAuthenticated, IsAdminUser, ]
-    queryset = AttendanceLog.objects.all()
-    # filter_backends = [OrderingFilter]
-    # ordering_fields = '__all__'
+    queryset = AttendanceLog.objects.all().order_by("date")
 
     def get(self, request):
         pagination_class = CustomPagination
         paginator = pagination_class()
-
         queryset = self.get_queryset()
         page = paginator.paginate_queryset(queryset, request)
         serializer = AttendanceSerializer(page, many=True)
-
         return paginator.get_paginated_response(serializer.data)
 
 
-# implement this
 class AttendanceOfUserView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = self.request.user
-        courses = AttendanceLog.objects.filter(device_id=user.device_id)
-        serializer = AttendanceSerializer(courses, many=True)
+        at = AttendanceLog.objects.filter(device_id=user.device_id)
+        serializer = AttendanceSerializer(at, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DailyAttendanceOfUserView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = self.request.user
+        da = DailyLog.objects.filter(user=user.device_id)
+        serializer = DailyLogsSerializer(da, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -88,7 +93,6 @@ class ViewAttendanceDetail(generics.GenericAPIView):
         user = self.request.user
         if user.role.name == "Admin":
             device_id = request.GET.get('device_id')
-            time = request.GET.get('time')
             start_date = request.GET.get('sdate')
             end_date = request.GET.get('edate')
             if start_date and end_date and device_id is not None:
@@ -171,6 +175,14 @@ class ReportView(generics.GenericAPIView):
         # return Response(serializer.data)
 
 
+class ViewTodayReport(generics.GenericAPIView):
+    today = datetime.date.today()
+    queryset = DailyLog.objects.filter(day=today)
+
+    def get(self, request):
+        queryset = self.get_queryset()
+        serializer = DailyLogsSerializer(queryset, many=True).data
+        return Response(serializer, status=status.HTTP_200_OK)
 # class ViewDailyAttendance(generics.ListAPIView):
 #     permission_classes = [IsAuthenticated, IsAdminUser, ]
 #     queryset = DailyLog.objects.all()

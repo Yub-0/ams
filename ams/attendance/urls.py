@@ -13,4 +13,6 @@ urlpatterns = [
          name='view attendance details(user-specific)'),
     path('report', views.ReportView.as_view()),
     path('showReport', views.TodaysReport.as_view(), name='show todays report'),
+    path('todayReport', views.ViewTodayReport.as_view()),
+    path('dailyAttendanceOfUser', views.DailyAttendanceOfUserView.as_view())
 ]
